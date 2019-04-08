@@ -7,6 +7,26 @@ import math
 from pyltp import Segmentor
 from tqdm import tqdm
 
+def seg_analysis():
+    segger = Segmentor()
+    segger.load('../data/Data_LCSTS_News_Taobao_Chatbot/model/cws.model')
+   
+    writer = open('split_words.txt', 'w')
+    test_num = 7999
+    data = pd.read_csv('data/aug/aug.data.train.lc', header=None, sep='\t',nrows=test_num)
+    unequal_counter = 0
+    for i in range(data.shape[0]):
+        src_text = data.iloc[i][0]
+        gs = ast.literal_eval(data.iloc[i][5])
+        ls = segger.segment(src_text)
+        ls = [word for word in ls]
+
+        if len(gs) != len(ls):
+            writer.write(' '.join(gs)+'\n'+' '.join(ls)+'\n\n')
+            unequal_counter += 1
+    print('unequal ratio:{}'.format(unequal_counter * 1.0 / data.shape[0]))
+    writer.close()
+
 def eval():
     ngram1 = 3
     ngram2 = 2
@@ -31,11 +51,12 @@ def eval():
         err_word = real_split[err_pos]
         
         word = segger.segment(input_)
+        word = [w for w in word]
+
         if len(real_split) != len(word):
             bad_case += 1
+            #import pdb;pdb.set_trace()
             continue
-            import pdb
-            pdb.set_trace()
         
         text = ' '.join(word)
         scores1 = model1.full_scores(text,bos=False, eos=False)
@@ -67,8 +88,7 @@ def eval():
             counter += 1
         else:
             continue
-            import pdb
-            pdb.set_trace()
+            import pdb;pdb.set_trace()
     print('acc:', counter * 1.0/ test_num)
     print(err_len*1.0/test_num)
 
@@ -98,5 +118,6 @@ def test():
         #score = model.score(text.strip())
         #print(score)
 if __name__ == '__main__':
-    eval()
+    seg_analysis()
+    #eval()
     #test()
